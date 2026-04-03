@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "./src/lib/supabase";
 
 const FONT = `@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,700;1,9..144,900&family=Nunito:wght@400;500;600;700;800;900&display=swap');`;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const css = `
 ${FONT}
@@ -796,7 +797,7 @@ function WaitlistForm({ submitted, setSubmitted, count, setCount }) {
   const handle = async () => {
     const normalizedEmail = email.trim().toLowerCase();
 
-    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+    if (!normalizedEmail || normalizedEmail.length > 320 || !EMAIL_REGEX.test(normalizedEmail)) {
       setError("Enter a valid email address.");
       setNotice("");
       return;
@@ -812,8 +813,7 @@ function WaitlistForm({ submitted, setSubmitted, count, setCount }) {
 
     if (insertError) {
       if (insertError.code === "23505") {
-        setSubmitted(true);
-        setNotice("You're already on the waitlist.");
+        setNotice("This email is already on the waitlist.");
         setLoading(false);
         return;
       }
@@ -844,10 +844,11 @@ function WaitlistForm({ submitted, setSubmitted, count, setCount }) {
   return (
     <>
       <div className="wl-row">
-        <input className="wl-input" type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handle()} />
+        <input className="wl-input" type="email" placeholder="your@email.com" value={email} autoComplete="email" required maxLength={320} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handle()} />
         <button className="wl-btn" onClick={handle} disabled={loading}>{loading ? "Joining..." : "Join the waitlist →"}</button>
       </div>
       <p className="wl-note">🔒 No spam. Just a launch notification.</p>
+      {notice && <p className="wl-ok">{notice}</p>}
       {error && <p className="wl-error">{error}</p>}
     </>
   );
